@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from "react-icons/fa";
-import Footer from "../components/Footer";
+import Footer from "../Components/Footer";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
