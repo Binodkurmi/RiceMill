@@ -1,0 +1,5 @@
+:root {
+  --announcement-bar-height: 68px;
+  --navbar-height: 64px;
+  --total-nav-height: calc(var(--announcement-bar-height) + var(--navbar-height));
+}

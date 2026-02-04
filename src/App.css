@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out both;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2.5s infinite;
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+}
+
+@layer utilities {
+  .animate-pulse-soft {
+    animation: pulseSoft 2.5s infinite;
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+  }
+}
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 1s ease-out both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(10px); }
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animate-progress {
+  animation: progress 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
