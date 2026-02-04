@@ -35,31 +35,31 @@ export default function Contact() {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.firstName?.trim()) {
       errors.firstName = 'First name is required';
     }
-    
+
     if (!formData.lastName?.trim()) {
       errors.lastName = 'Last name is required';
     }
-    
+
     if (!formData.email?.trim()) {
       errors.email = 'Email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       errors.email = 'Please enter a valid email address';
     }
-    
+
     if (formData.phone && !/^[\d\s+-]+$/.test(formData.phone)) {
       errors.phone = 'Please enter a valid phone number';
     }
-    
+
     if (!formData.message?.trim()) {
       errors.message = 'Message is required';
     } else if (formData.message.trim().length < 10) {
       errors.message = 'Message must be at least 10 characters';
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -68,17 +68,19 @@ export default function Contact() {
     e.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(false);
-    
+
     if (!validateForm()) {
       return;
     }
 
-     try {
-    const response = await fetch('http://localhost:5000/api/contact', {  // ← Note port 5000
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
@@ -88,6 +90,7 @@ export default function Contact() {
         })
       });
 
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to submit form');
@@ -95,7 +98,7 @@ export default function Contact() {
 
       const data = await response.json();
       setSubmitSuccess(true);
-      
+
       // Reset form after successful submission
       setFormData({
         firstName: '',
@@ -118,10 +121,10 @@ export default function Contact() {
       <section className="min-h-screen bg-gradient-to-b from-green-50 to-white text-green-800 font-sans py-18 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Title */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             className="text-center space-y-4 px-4"
           >
             <h1 className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-green-800">
@@ -134,10 +137,10 @@ export default function Contact() {
           </motion.div>
 
           {/* Map */}
-          <motion.section 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            transition={{ delay: 0.2, duration: 0.5 }} 
+          <motion.section
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
             className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-lg"
           >
             <iframe
@@ -156,10 +159,10 @@ export default function Contact() {
           {/* Contact Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
             {/* Info */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              transition={{ delay: 0.3, duration: 0.5 }} 
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
               className="bg-white p-6 rounded-xl shadow-md"
             >
               <h2 className="text-2xl font-bold mb-6 text-green-700">CONTACT INFO</h2>
@@ -190,21 +193,21 @@ export default function Contact() {
             </motion.div>
 
             {/* Form */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.4, duration: 0.5 }} 
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
               className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"
             >
               <h2 className="text-2xl font-bold mb-6 text-green-700">DROP A MESSAGE</h2>
-              
+
               {/* Success Message */}
               {submitSuccess && (
                 <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
                   Thank you! Your message has been received. We'll get back to you soon.
                 </div>
               )}
-              
+
               {/* Error Message */}
               {submitError && (
                 <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -289,8 +292,8 @@ export default function Contact() {
                     <p className="mt-1 text-sm text-red-600">{validationErrors.message}</p>
                   )}
                 </div>
-                <motion.button 
-                  type="submit" 
+                <motion.button
+                  type="submit"
                   disabled={isSubmitting}
                   className="md:col-span-2 mt-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
                   whileHover={{ scale: 1.02 }}
