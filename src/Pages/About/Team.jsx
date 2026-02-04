@@ -185,19 +185,19 @@ const Team = () => {
   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
     {[
       {
-        name: "Tiju Kurmi",
+        name: "Ram",
         role: "Founder & CEO",
         bio: "With 20+ years in rice cultivation, Mr. Tiju established Jai Ambe with a vision for sustainable agriculture",
         img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
       },
       {
-        name: "Sita Kurmi",
+        name: "sita",
         role: "Operations Director",
         bio: "Oversees daily production ensuring quality standards are met at every stage",
         img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80"
       },
       {
-        name: "Rajesh Yadav",
+        name: "Hari",
         role: "Agricultural Head",
         bio: "Leads our farmer partnerships and sustainable farming initiatives",
         img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"

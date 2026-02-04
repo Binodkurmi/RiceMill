@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from "react-icons/fa";
 import Footer from "../Components/Footer";
@@ -16,6 +16,23 @@ export default function Contact() {
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  const [submissionAttempts, setSubmissionAttempts] = useState(0);
+
+  // Test API connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL;
+        console.log('Testing API connection to:', API_URL);
+        const response = await fetch(`${API_URL}/api/health`);
+        const data = await response.json();
+        console.log('✅ API Health check:', data);
+      } catch (error) {
+        console.error('❌ API Connection test failed:', error);
+      }
+    };
+    testConnection();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,13 +85,26 @@ export default function Contact() {
     e.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(false);
+    setIsSubmitting(true); // CRITICAL FIX: Added this line
+
+    // Prevent too many submission attempts
+    if (submissionAttempts >= 3) {
+      setSubmitError('Too many attempts. Please wait a moment before trying again.');
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!validateForm()) {
+      setIsSubmitting(false);
       return;
     }
 
     try {
       const API_URL = import.meta.env.VITE_API_URL;
+      
+      // Add timeout for fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       const response = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
@@ -87,17 +117,22 @@ export default function Contact() {
           email: formData.email.trim(),
           phone: formData.phone?.trim() || '',
           message: formData.message.trim()
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit form');
+        throw new Error(errorData.message || `Failed to submit form (Status: ${response.status})`);
       }
 
       const data = await response.json();
+      console.log('✅ Form submission successful:', data);
+      
       setSubmitSuccess(true);
+      setSubmissionAttempts(0); // Reset attempt counter on success
 
       // Reset form after successful submission
       setFormData({
@@ -108,9 +143,27 @@ export default function Contact() {
         message: ''
       });
 
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 5000);
+
     } catch (error) {
-      console.error('Submission error:', error);
-      setSubmitError(error.message || 'An error occurred while submitting. Please try again later.');
+      console.error('❌ Submission error:', error);
+      
+      // Increment submission attempts
+      setSubmissionAttempts(prev => prev + 1);
+      
+      // User-friendly error messages
+      if (error.name === 'AbortError') {
+        setSubmitError('Request timed out. Please check your connection and try again.');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        setSubmitError('Network error. Please check your internet connection.');
+      } else if (error.message.includes('CORS')) {
+        setSubmitError('Connection issue. Please try again or contact support.');
+      } else {
+        setSubmitError(error.message || 'An error occurred while submitting. Please try again later.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -203,15 +256,35 @@ export default function Contact() {
 
               {/* Success Message */}
               {submitSuccess && (
-                <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                   Thank you! Your message has been received. We'll get back to you soon.
-                </div>
+                </motion.div>
               )}
 
               {/* Error Message */}
               {submitError && (
-                <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
                   {submitError}
+                </motion.div>
+              )}
+
+              {submissionAttempts >= 3 && (
+                <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+                  <strong>Note:</strong> Multiple submission attempts detected. Please wait a moment before trying again.
                 </div>
               )}
 
@@ -226,9 +299,15 @@ export default function Contact() {
                     onChange={handleChange}
                     className={`w-full p-3 bg-green-50 border ${validationErrors.firstName ? 'border-red-500' : 'border-green-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
                     required
+                    disabled={isSubmitting}
                   />
                   {validationErrors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.firstName}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {validationErrors.firstName}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -241,9 +320,15 @@ export default function Contact() {
                     onChange={handleChange}
                     className={`w-full p-3 bg-green-50 border ${validationErrors.lastName ? 'border-red-500' : 'border-green-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
                     required
+                    disabled={isSubmitting}
                   />
                   {validationErrors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.lastName}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {validationErrors.lastName}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -257,9 +342,15 @@ export default function Contact() {
                     className={`w-full p-3 bg-green-50 border ${validationErrors.email ? 'border-red-500' : 'border-green-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
                     placeholder="abc@gmail.com"
                     required
+                    disabled={isSubmitting}
                   />
                   {validationErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {validationErrors.email}
+                    </p>
                   )}
                 </div>
                 <div>
@@ -271,9 +362,16 @@ export default function Contact() {
                     value={formData.phone}
                     onChange={handleChange}
                     className={`w-full p-3 bg-green-50 border ${validationErrors.phone ? 'border-red-500' : 'border-green-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    placeholder="+977 9876543210"
+                    disabled={isSubmitting}
                   />
                   {validationErrors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.phone}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {validationErrors.phone}
+                    </p>
                   )}
                 </div>
                 <div className="md:col-span-2">
@@ -287,15 +385,24 @@ export default function Contact() {
                     className={`w-full p-3 bg-green-50 border ${validationErrors.message ? 'border-red-500' : 'border-green-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
                     required
                     minLength={10}
+                    disabled={isSubmitting}
                   />
                   {validationErrors.message && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors.message}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {validationErrors.message}
+                    </p>
                   )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    Minimum 10 characters required ({formData.message.trim().length}/10)
+                  </p>
                 </div>
                 <motion.button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="md:col-span-2 mt-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+                  disabled={isSubmitting || submissionAttempts >= 3}
+                  className="md:col-span-2 mt-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -310,10 +417,13 @@ export default function Contact() {
                   ) : (
                     <>
                       <FaPaperPlane />
-                      Submit Queries
+                      {submissionAttempts >= 3 ? 'Try Again Later' : 'Submit Queries'}
                     </>
                   )}
                 </motion.button>
+                <p className="md:col-span-2 text-center text-sm text-gray-500">
+                  * Required fields
+                </p>
               </form>
             </motion.div>
           </div>
